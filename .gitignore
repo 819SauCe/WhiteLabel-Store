@@ -1,4 +1,14 @@
-# ignorando env
 .env
 env
 /.env
+node_modules
+/White-label-Store/node_modules/
+White-label-Store/node_modules/
+vite.config.js.timestamp-*
+/White-label-Store/vite.config.ts.timestamp-*
+White-label-Store/vite.config.js.timestamp-*
+White-label-Store/vite.config.ts.timestamp-*
+/build
+/white-label-store/build
+white-label-store/build
+/White-label-Store/
