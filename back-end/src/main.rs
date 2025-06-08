@@ -1,3 +1,4 @@
+mod functions;
 use axum::{
     extract::{Path, State, Multipart, TypedHeader},
     http::{Request, StatusCode},
@@ -19,34 +20,30 @@ use tower_http::services::ServeDir;
 use chrono::NaiveDateTime;
 use once_cell::sync::Lazy;
 use bcrypt::{DEFAULT_COST, hash, verify};
+use crate::functions::install::create_all_tables;
+use crate::functions::route::*;
 
-fn install_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
-    let create_users_table = r#"
-        CREATE TABLE IF NOT EXISTS users (
-            id SERIAL PRIMARY KEY,
-            username VARCHAR(50) UNIQUE NOT NULL,
-            password VARCHAR(255) NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-    "#;
+#[tokio::main]
+async fn main() {
+    dotenvy::from_path(std::path::Path::new("../.env")).expect("Falha ao carregar .env");
+    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let pool = PgPool::connect(&database_url).await.expect("Failed to connect to the database");
 
-    sqlx::query(create_users_table).execute(pool).await?;
-    Ok(())
-}
+    create_all_tables(&pool).await;
 
-fn main() {
-    // Carregando o arquivo .env
-    from_path(StdPath::new("../.env")).expect("Falha ao carregar .env");
-    
-    // Iniciando conexão com o banco de dados
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let pool = PgPoolOptions::new()
-        .max_connections(5)
-        .connect(&database_url)
+    let cors = CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods(Any)
+        .allow_headers(Any);
+
+    let app = Router::new()
+        .route("/produtos/register", post(product_register).with_state(pool.clone()))
+        .route("/produtos", get(product_list).with_state(pool.clone()))
+        .layer(cors);
+   
+    let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
+    Server::bind(&addr)
+        .serve(app.into_make_service())
         .await
-        .expect("Failed to create database connection pool");
-
-    // Instalação das tabelas no banco de dados
-    install_tables(&pool).expect("Failed to install database tables");
-    println!("finalizado");
+        .unwrap();
 }

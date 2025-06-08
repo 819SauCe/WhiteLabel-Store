@@ -21,13 +21,7 @@
     const produtosPorPagina = 40;
 
 
-    let products = [
-        { id: 1, name: 'Camiseta Nike', brand: 'Nike', color: 'Red', price: 99.99, frete: true, outlet: false, cupons: ['PRIMEIRACOMPRA'], image: '/camiseta-nike.jpg' },
-        { id: 2, name: 'Tênis Adidas', brand: 'Adidas', color: 'Blue', price: 199.99, frete: false, outlet: true, cupons: ['CAMISETAS22'], image: '/tenis-adidas.jpg' },
-        { id: 3, name: 'Calça Puma', brand: 'Puma', color: 'Green', price: 149.99, frete: true, outlet: true, cupons: ['CUSTO0'], image: '/calca-puma.jpg' },
-        { id: 4, name: 'Jaqueta Reebok', brand: 'Reebok', color: 'Black', price: 249.99, frete: false, outlet: false, cupons: [], image: '/jaqueta-reebok.jpg' },
-        { id: 5, name: 'Camiseta Nike', brand: 'Nike', color: 'Red', price: 99.99, frete: true, outlet: false, cupons: ['PRIMEIRACOMPRA'], image: '/camiseta-nike.jpg' },
-    ];
+    let products = [];
 
     function toggleFiltro(tipo, valor) {
         if (tipo === 'marca') {
@@ -54,6 +48,24 @@
     $: totalPaginas = Math.ceil(produtosFiltrados.length / produtosPorPagina);
     $: produtosPaginados = produtosFiltrados.slice((paginaAtual - 1) * produtosPorPagina, paginaAtual * produtosPorPagina);
 
+    onMount(async () => {
+        const res = await fetch("http://localhost:3000/produtos");
+        const data = await res.json();
+
+        products = data.map(p => ({
+            ...p,
+            price: p.valor,
+            brand: p.marca,
+            color: p.cor,
+            cupons: [],
+            frete: false,
+            outlet: false,
+            image: "/placeholder.jpg"
+        }));
+
+        marks = [...new Set(products.map(p => p.brand))];
+        cores = [...new Set(products.map(p => p.color))];
+    });
 </script>
 
 <!--Certificates-->
