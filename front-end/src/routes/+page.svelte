@@ -54,7 +54,11 @@
 
         products = data.map(p => ({
             ...p,
+            id: p.id,
+            name: p.nome,
             price: p.valor,
+            oldPrice: Number((p.valor / (1 - p.desconto)).toFixed(2)),
+            discount: Math.round(p.desconto * 100),
             brand: p.marca,
             color: p.cor,
             cupons: [],
@@ -203,7 +207,7 @@
     main {
         display: flex;
         align-items: flex-start;
-        gap: 2rem;
+        gap: 0.1rem;
     }
     .filter {
         display: flex;

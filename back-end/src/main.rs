@@ -39,6 +39,7 @@ async fn main() {
     let app = Router::new()
         .route("/produtos/register", post(product_register).with_state(pool.clone()))
         .route("/produtos", get(product_list).with_state(pool.clone()))
+        .route("/produtos/:id", get(product_details).with_state(pool.clone()))
         .layer(cors);
    
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));

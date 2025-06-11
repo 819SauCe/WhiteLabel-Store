@@ -1,8 +1,6 @@
-use axum::{Json, extract::State};
-use serde::Deserialize;
-use sqlx::PgPool;
-use axum::http::StatusCode;
-use sqlx::FromRow;
+use axum::{extract::{Path, State},http::StatusCode,Json,};
+use serde::{Deserialize, Serialize};
+use sqlx::{FromRow, PgPool};
 
 #[derive(FromRow, serde::Serialize)]
 pub struct Product {
@@ -28,6 +26,19 @@ pub struct ProductRegister {
     pub loja_id: i32,
     pub registrado_por: i32,
 }
+
+#[derive(Debug, Deserialize, sqlx::FromRow)]
+pub struct ProductOverview {
+    pub id: i32,
+    pub nome: String,
+    pub marca: String,
+    pub cor: String,
+    pub valor: f64,
+    pub desconto: f64,
+    pub descricao: String,
+    pub categoria_id: i32,
+}
+
 
 pub async fn product_register(State(pool): State<PgPool>,Json(produto): Json<ProductRegister>,) -> Result<String, (axum::http::StatusCode, String)> {
     println!("{:?}", produto);
@@ -68,4 +79,18 @@ pub async fn product_list(State(pool): State<PgPool>) -> Result<Json<Vec<Product
         })?;
 
     Ok(Json(produtos))
+}
+
+pub async fn product_details(Path(id): Path<i32>, State(pool): State<PgPool>) -> Result<Json<Product>, (StatusCode, String)> {
+    let query = "SELECT * FROM produtos WHERE id = $1";
+    let produto = sqlx::query_as::<_, Product>(query)
+        .bind(id)
+        .fetch_one(&pool)
+        .await
+        .map_err(|e| {
+            println!("Erro ao buscar produto por id: {:?}", e);
+            (StatusCode::NOT_FOUND, e.to_string())
+        })?;
+
+    Ok(Json(produto))
 }
